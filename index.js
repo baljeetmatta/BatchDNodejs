@@ -1,8 +1,52 @@
 const express=require("express");
 const esession=require("express-session");
 const userRoute=require("./routes/userRoute");
-
+const orderRoute=require("./routes/orderRoute");
 const app=express();//createServer
+const client=require("mongodb").MongoClient;
+let dbinstance;
+
+client.connect("mongodb+srv://userroot:Password4001@cluster0.cmk41.mongodb.net/")
+.then((server)=>{
+    dbinstance=server.db("ecommerce");
+    console.log("Db Connected...")
+}).catch ((err)=>{
+    console.log("Error",err);
+
+
+})
+//db.users.find({});
+//db.users.findOne({})
+app.get("/getUsers",(req,res)=>{
+
+    dbinstance.collection("users").find({}).toArray().
+    then((response)=>{
+        res.json(response);
+    })
+})
+app.get("/showUsers",(req,res)=>{
+
+    dbinstance.collection("users").find({}).toArray().
+    then((response)=>{
+       // res.json(response);
+       res.render("showusers",{users:response});
+       
+    })
+})
+app.get("/AddUser",(req,res)=>{
+
+    let obj={};
+    obj.name="Test";
+    obj.username="TestUSer";
+    obj.password="testpass";
+    dbinstance.collection("users").insertOne(obj)
+    .then((data)=>{
+        console.log(data);
+        res.redirect("/getUsers");
+
+    })
+
+})
 app.use(express.static("."));
 app.use(esession({
     saveUninitialized:true,
@@ -10,9 +54,11 @@ app.use(esession({
     secret:'SADSA#@$#@$#@4'
 }))
 
+//app.use("view engine","ejs");
 app.use("/users",auth,userRoute);
 // /users/dashboard
 // /users/profile
+app.use("/orders",auth,orderRoute);
 
 
 function auth(req,res,next)
@@ -31,6 +77,7 @@ const path=require("path");
 
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
+app.set("view engine","ejs");
 
 app.get("/Login",(req,res)=>{
     if(!req.session.user)
@@ -63,19 +110,33 @@ app.get("/logout",(req,res)=>{
 // })
 app.post("/Login",(req,res)=>{
     
-    let users=JSON.parse( fs.readFileSync("users.json"));
-    let results=users.filter((item)=>{
-        if(item.username==req.body.username && item.password==req.body.password)
-            return true;
+    // let users=JSON.parse( fs.readFileSync("users.json"));
+    // let results=users.filter((item)=>{
+    //     if(item.username==req.body.username && item.password==req.body.password)
+    //         return true;
 
+    // })
+    // if(results.length==0)
+    //     res.redirect("/login"); 
+    // else
+    // {
+    //     req.session.user=req.body.username;
+    //     res.redirect("/users/dashboard");
+    // }
+    dbinstance.collection("users").findOne({$and:[{"username":req.body.username},{"password":req.body.password}]})
+    .then((data)=>{
+        if(data==null)
+        {
+            res.redirect("/login")
+        }
+        else
+        {
+            req.session.user=data._id;
+            req.session.name=data.name;
+            res.redirect("/users/dashboard");
+
+        }
     })
-    if(results.length==0)
-        res.redirect("/login"); 
-    else
-    {
-        req.session.user="x"
-        res.redirect("/users/dashboard");
-    }
 
 
 
