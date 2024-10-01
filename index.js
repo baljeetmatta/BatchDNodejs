@@ -3,35 +3,55 @@ const esession=require("express-session");
 const userRoute=require("./routes/userRoute");
 const orderRoute=require("./routes/orderRoute");
 const app=express();//createServer
-const client=require("mongodb").MongoClient;
-let dbinstance;
+const Users=require("./models/uModel");
 
-client.connect("mongodb+srv://userroot:Password4001@cluster0.cmk41.mongodb.net/")
-.then((server)=>{
-    dbinstance=server.db("ecommerce");
-    console.log("Db Connected...")
-}).catch ((err)=>{
-    console.log("Error",err);
-
+const mongoose=require("mongoose");
+mongoose.connect("mongodb+srv://userroot:Password4001@cluster0.cmk41.mongodb.net/ecommerce")
+.then((response)=>{
+    console.log("Connected ...");
+}).catch((err)=>{
+    console.log("Error:"+err);
 
 })
+
+// const client=require("mongodb").MongoClient;
+// let dbinstance;
+
+// client.connect("mongodb+srv://userroot:Password4001@cluster0.cmk41.mongodb.net/")
+// .then((server)=>{
+//     dbinstance=server.db("ecommerce");
+//     console.log("Db Connected...")
+// }).catch ((err)=>{
+//     console.log("Error",err);
+
+
+// })
 //db.users.find({});
 //db.users.findOne({})
 app.get("/getUsers",(req,res)=>{
 
-    dbinstance.collection("users").find({}).toArray().
-    then((response)=>{
+    // dbinstance.collection("users").find({}).toArray().
+    // then((response)=>{
+    //     res.json(response);
+    // })
+    Users.find({}).then((response)=>{
         res.json(response);
+
     })
 })
 app.get("/showUsers",(req,res)=>{
 
-    dbinstance.collection("users").find({}).toArray().
-    then((response)=>{
-       // res.json(response);
-       res.render("showusers",{users:response});
-       
+    Users.find({}).then((response)=>{
+        res.render("showusers",{users:response});
+
     })
+
+    // dbinstance.collection("users").find({}).toArray().
+    // then((response)=>{
+    //    // res.json(response);
+    //    res.render("showusers",{users:response});
+       
+    // })
 })
 app.get("/AddUser",(req,res)=>{
 
